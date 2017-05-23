@@ -3,9 +3,11 @@
 #include <string>
 #include <vector>
 
-class GitScanner {
+class GitScanner
+{
+	friend class GitUpdater;
 public:
-	GitScanner(uint16_t depth_limit);
+	GitScanner(uint16_t depth_limit = 10);
 	~GitScanner() {}
 private:
 	void scan();

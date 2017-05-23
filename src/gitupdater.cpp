@@ -23,11 +23,12 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "gitscanner.h"
+#include <iostream>
 #include "gitupdater.h"
 
-int main()
+GitUpdater& GitUpdater::operator<<(const GitScanner &scanner)
 {
-	GitUpdater() << GitScanner();
-	return 0;
+	for (const auto &path: scanner.m_git_repositories) {
+		std::cout << "Scanning " << path << std::endl;
+	}
 }

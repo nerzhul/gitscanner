@@ -23,11 +23,15 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "gitscanner.h"
-#include "gitupdater.h"
+#pragma once
 
-int main()
+#include "gitscanner.h"
+
+class GitUpdater
 {
-	GitUpdater() << GitScanner();
-	return 0;
-}
+public:
+	GitUpdater() {}
+	~GitUpdater() {}
+
+	GitUpdater &operator<<(const GitScanner &scanner);
+};
