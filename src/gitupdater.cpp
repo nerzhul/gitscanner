@@ -27,32 +27,63 @@
 #include <git2/repository.h>
 #include <git2/remote.h>
 #include <cassert>
+#include <git2.h>
+#include <functional>
 #include "gitupdater.h"
 
 class GitRemote
 {
 public:
-	GitRemote(git_repository *repo, const char *remote_name)
+	GitRemote(git_repository *repo, const char *remote_name): m_remote_name(remote_name)
 	{
-		git_remote_lookup(&m_remote, repo, remote_name);
+		assert(m_remote_name);
+		m_fail = git_remote_lookup(&m_remote, repo, remote_name) != GIT_OK;
 	}
 
 	~GitRemote()
 	{
+		if (git_remote_connected(m_remote)) {
+			git_remote_disconnect(m_remote);
+		}
+
 		git_remote_free(m_remote);
 	}
 
 	GitRemote &fetch()
 	{
 		assert(m_remote);
-		git_fetch_options fetch_options = GIT_FETCH_OPTIONS_INIT;
-		fetch_options.download_tags = GIT_REMOTE_DOWNLOAD_TAGS_ALL;
-		fetch_options.prune = GIT_FETCH_PRUNE;
-		git_remote_fetch(m_remote, NULL, &fetch_options, NULL);
+
+		if (m_fail) {
+			return *this;
+		}
+
+		git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
+		fetch_opts.callbacks.credentials = GitRemote::cred_acquire_cb;
+		if (git_remote_fetch(m_remote, NULL, &fetch_opts, "fetch") != GIT_OK) {
+			const git_error *e = giterr_last();
+			std::cerr << "Unable to fetch remote " << m_remote_name
+					<< ". Error was: " << e->message << std::endl;
+			return *this;
+		}
+
 		return *this;
 	}
+
+	static int cred_acquire_cb(git_cred **out,
+			const char * url,
+			const char * username_from_url,
+			unsigned int allowed_types,
+			void * payload)
+	{
+		return git_cred_ssh_key_from_agent(out, username_from_url);
+	}
+
+	const bool failed() const { return m_fail; }
+
 private:
+	bool m_fail = false;
 	git_remote *m_remote = nullptr;
+	const char *m_remote_name = nullptr;
 };
 
 class GitRepository
@@ -60,7 +91,8 @@ class GitRepository
 public:
 	GitRepository(const std::string &path)
 	{
-		m_fail = git_repository_open(&m_repo, std::string(path + "/.git").c_str()) != 0;
+		m_fail = git_repository_open(&m_repo,
+				std::string(path + "/.git").c_str()) != GIT_OK;
 		m_remotes.strings = nullptr;
 		m_remotes.count = 0;
 	}
