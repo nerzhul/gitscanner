@@ -26,6 +26,7 @@
 #include <iostream>
 #include <git2/repository.h>
 #include <git2/remote.h>
+#include <cassert>
 #include "gitupdater.h"
 
 class GitRemote
@@ -43,10 +44,11 @@ public:
 
 	GitRemote &fetch()
 	{
+		assert(m_remote);
 		git_fetch_options fetch_options = GIT_FETCH_OPTIONS_INIT;
 		fetch_options.download_tags = GIT_REMOTE_DOWNLOAD_TAGS_ALL;
 		fetch_options.prune = GIT_FETCH_PRUNE;
-//			git_remote_fetch(remote, nullptr, &fetch_options, nullptr);
+		git_remote_fetch(m_remote, NULL, &fetch_options, NULL);
 		return *this;
 	}
 private:
