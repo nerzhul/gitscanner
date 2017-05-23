@@ -58,8 +58,18 @@ public:
 		}
 
 		git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
+		fetch_opts.prune = GIT_FETCH_NO_PRUNE;
+		fetch_opts.download_tags = GIT_REMOTE_DOWNLOAD_TAGS_ALL;
 		fetch_opts.callbacks.credentials = GitRemote::cred_acquire_cb;
-		if (git_remote_fetch(m_remote, NULL, &fetch_opts, "fetch") != GIT_OK) {
+		git_strarray refspecs = {};
+		if (git_remote_get_fetch_refspecs(&refspecs, m_remote) != GIT_OK) {
+			const git_error *e = giterr_last();
+			std::cerr << "Unable to fetch refspecs for remote " << m_remote_name
+					<< ". Error was: " << e->message << std::endl;
+			return *this;
+		}
+
+		if (git_remote_fetch(m_remote, &refspecs, &fetch_opts, "fetch") != GIT_OK) {
 			const git_error *e = giterr_last();
 			std::cerr << "Unable to fetch remote " << m_remote_name
 					<< ". Error was: " << e->message << std::endl;
