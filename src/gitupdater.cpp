@@ -143,6 +143,16 @@ private:
 	git_strarray m_remotes;
 };
 
+GitUpdater::GitUpdater()
+{
+	git_libgit2_init();
+}
+
+GitUpdater::~GitUpdater()
+{
+	git_libgit2_shutdown();
+}
+
 GitUpdater& GitUpdater::operator<<(const GitScanner &scanner)
 {
 	for (const auto &path: scanner.m_git_repositories) {

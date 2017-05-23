@@ -30,8 +30,8 @@
 class GitUpdater
 {
 public:
-	GitUpdater() {}
-	~GitUpdater() {}
+	GitUpdater();
+	~GitUpdater();
 
 	GitUpdater &operator<<(const GitScanner &scanner);
 };
