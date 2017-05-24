@@ -5,10 +5,13 @@ automatically your local repository remotes and keep them update-to-date.
 
 It's written in C++11.
 
+# Command line options
+
+* __-d__: daemon mode. Run process in background
+* __-i <seconds>__: how many time to sleep between 2 scans (default: 60sec)
+
 # Next features
 
 At this moment, gitscanner only fetches remotes on all repositories. It's planned to add
 
-* daemon mode
-* custom wait duration
 * local branch pull (rebase) if no uncommited files are present

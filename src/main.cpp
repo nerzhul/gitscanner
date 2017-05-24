@@ -28,10 +28,15 @@
 #include <thread>
 #include <condition_variable>
 #include <iostream>
+#include <getopt.h>
+#include <cstring>
+#include <unistd.h>
 #include "gitscanner.h"
 #include "gitupdater.h"
 
 static bool stop_main_loop = false;
+static int sleeping_time = 60;
+static bool daemonize = false;
 std::condition_variable cv_main_sleep;
 
 static void signal_should_stop(int signum)
@@ -40,10 +45,60 @@ static void signal_should_stop(int signum)
 	cv_main_sleep.notify_all();
 }
 
-static constexpr uint32_t sleeping_time = 60;
-
-int main()
+static bool is_number(const char *str)
 {
+	int x = 0;
+	int len = strlen(str);
+
+	while(x < len) {
+		if (!isdigit(*(str+x)))
+			return false;
+
+		++x;
+	}
+
+	return true;
+}
+
+static void read_opts(int argc, char * const *argv)
+{
+	int c;
+	while ((c = getopt(argc, argv, "di:")) != -1) {
+		switch (c) {
+			case 'd':
+				std::cout << "Daemon mode enabled." << std::endl;
+				daemonize = true;
+				break;
+			case 'i':
+				if (!is_number(optarg)) {
+					std::cerr << "Option '-i' requires a number." << std::endl;
+					exit(EXIT_FAILURE);
+				}
+
+				sleeping_time = std::atoi(optarg);
+				break;
+			default: exit(EXIT_FAILURE);
+		}
+	}
+}
+
+int main(int argc, char * const *argv)
+{
+	read_opts(argc, argv);
+
+	if (daemonize) {
+		pid_t pid = fork();
+		// Fork failed
+		if (pid < 0) {
+			std::cerr << "I failed to fork. Dying." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+		// Fork success, parent exits
+		else if (pid > 0) {
+			exit(EXIT_SUCCESS);
+		}
+	}
+
 	signal(SIGTERM, signal_should_stop);
 	signal(SIGINT, signal_should_stop);
 
