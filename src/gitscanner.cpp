@@ -24,11 +24,9 @@
  */
 
 #include <iostream>
-#include <experimental/filesystem>
-#include <regex>
+#include <dirent.h>
+#include <cstring>
 #include "gitscanner.h"
-
-namespace fs = std::experimental::filesystem;
 
 GitScanner::GitScanner(uint16_t depth_limit):
 	m_depth_limit(depth_limit)
@@ -55,21 +53,24 @@ void GitScanner::scan_folder(const std::string &path, uint16_t depth)
 		return;
 	}
 
-	for (const auto &p : fs::directory_iterator(path)) {
-		try {
-			if (p.status().type() == fs::file_type::directory) {
-				// Ignore hidden files
-				if (p.path().filename().string()[0] != '.') {
-					scan_folder(p.path(), (uint16_t) (depth + 1));
+	DIR *dir;
+	struct dirent *ent;
+	if ((dir = opendir(path.c_str())) != NULL) {
+		while ((ent = readdir (dir)) != NULL) {
+			if (ent->d_type == DT_DIR) {
+				if (ent->d_name[0] != '.') {
+					scan_folder(path + "/" + std::string(ent->d_name),
+							(uint16_t) (depth + 1));
 				}
-				else if (p.path().filename().string() == ".git") {
+				else if (strcmp(ent->d_name, ".git") == 0) {
 					std::cout << "Found git repository: " << path << std::endl;
 					m_git_repositories.push_back(path);
 				}
 			}
 		}
-		catch (const fs::filesystem_error &e) {
-			std::cerr << "Ignoring path " << p.path() << ": " << e.what() << std::endl;
-		}
+		closedir(dir);
+	} else {
+		std::cerr << "Ignoring path " << path.c_str() << ": Unable to open dir"
+				<< std::endl;
 	}
 }
