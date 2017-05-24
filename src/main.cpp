@@ -45,6 +45,11 @@ static void signal_should_stop(int signum)
 	cv_main_sleep.notify_all();
 }
 
+static void signal_awake_scan(int signum)
+{
+	cv_main_sleep.notify_all();
+}
+
 static bool is_number(const char *str)
 {
 	int x = 0;
@@ -101,6 +106,7 @@ int main(int argc, char * const *argv)
 
 	signal(SIGTERM, signal_should_stop);
 	signal(SIGINT, signal_should_stop);
+	signal(SIGHUP, signal_awake_scan);
 
 	std::mutex m_cv_lock;
 

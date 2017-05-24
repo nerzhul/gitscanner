@@ -10,6 +10,11 @@ It's written in C++11.
 * __-d__: daemon mode. Run process in background
 * __-i <seconds>__: how many time to sleep between 2 scans (default: 60sec)
 
+# Signals handled
+
+* __SIGINT__, __SIGTERM__: terminate program after a finished scan or when program is sleeping.
+* __SIGHUP__: awake sleeping program
+
 # Next features
 
 At this moment, gitscanner only fetches remotes on all repositories. It's planned to add
