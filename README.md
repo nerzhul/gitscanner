@@ -3,7 +3,7 @@
 Gitscanner is a small tool which scan your homedir and use your SSH_AUTH_SOCK to fetch
 automatically your local repository remotes and keep them update-to-date.
 
-It's written in C++11.
+It's written in C++11 and under BSD 2 clauses license.
 
 # Command line options
 
