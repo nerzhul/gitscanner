@@ -26,13 +26,17 @@
 #include <csignal>
 #include <chrono>
 #include <thread>
+#include <condition_variable>
 #include "gitscanner.h"
 #include "gitupdater.h"
 
 static bool stop_main_loop = false;
+std::condition_variable cv_main_sleep;
+
 static void signal_should_stop(int signum)
 {
 	stop_main_loop = true;
+	cv_main_sleep.notify_all();
 }
 
 int main()
@@ -40,9 +44,13 @@ int main()
 	signal(SIGTERM, signal_should_stop);
 	signal(SIGINT, signal_should_stop);
 
+	std::mutex m_cv_lock;
+
 	while (!stop_main_loop) {
+		std::unique_lock<std::mutex> cv_u_lock(m_cv_lock);
 		GitUpdater() << GitScanner();
-		std::this_thread::sleep_for(std::chrono::seconds(60));
+
+		cv_main_sleep.wait_for(cv_u_lock, std::chrono::seconds(60));
 	}
 
 	return 0;
