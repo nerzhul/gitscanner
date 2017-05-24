@@ -27,6 +27,7 @@
 #include <chrono>
 #include <thread>
 #include <condition_variable>
+#include <iostream>
 #include "gitscanner.h"
 #include "gitupdater.h"
 
@@ -39,6 +40,8 @@ static void signal_should_stop(int signum)
 	cv_main_sleep.notify_all();
 }
 
+static constexpr uint32_t sleeping_time = 60;
+
 int main()
 {
 	signal(SIGTERM, signal_should_stop);
@@ -50,7 +53,10 @@ int main()
 		std::unique_lock<std::mutex> cv_u_lock(m_cv_lock);
 		GitUpdater() << GitScanner();
 
-		cv_main_sleep.wait_for(cv_u_lock, std::chrono::seconds(60));
+		std::cout << "GitUpdater finished. Now sleeping for " << sleeping_time
+				<< " seconds." << std::endl;
+
+		cv_main_sleep.wait_for(cv_u_lock, std::chrono::seconds(sleeping_time));
 	}
 
 	return 0;
