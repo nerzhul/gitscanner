@@ -23,11 +23,27 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <csignal>
+#include <chrono>
+#include <thread>
 #include "gitscanner.h"
 #include "gitupdater.h"
 
+static bool stop_main_loop = false;
+static void signal_should_stop(int signum)
+{
+	stop_main_loop = true;
+}
+
 int main()
 {
-	GitUpdater() << GitScanner();
+	signal(SIGTERM, signal_should_stop);
+	signal(SIGINT, signal_should_stop);
+
+	while (!stop_main_loop) {
+		GitUpdater() << GitScanner();
+		std::this_thread::sleep_for(std::chrono::seconds(60));
+	}
+
 	return 0;
 }
